@@ -27,6 +27,7 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Acme.BookStore.Authors;
 using Acme.BookStore.Books;
+using Acme.BookStore.EntityFrameworkCore.EntityTypeConfigurations;
 
 namespace Acme.BookStore.EntityFrameworkCore;
 
@@ -149,12 +150,7 @@ public class BookStoreDbContext :
             b.HasIndex(x => new { x.TenantId, x.Name });
         });
 
-        builder.Entity<DepartmentTeam>(b =>
-        {
-            b.ToTable(BookStoreConsts.DbTablePrefix + "DepartmentTeams", BookStoreConsts.DbSchema);
-            b.ConfigureByConvention();
-            b.Property(x => x.Name).IsRequired().HasMaxLength(DepartmentConsts.MaxTeamNameLength);
-        });
+        builder.ApplyConfiguration(new DepartmentTeamConfiguration());
 
         builder.Entity<Employee>(b =>
         {
@@ -184,6 +180,10 @@ public class BookStoreDbContext :
 
             b.HasMany(x => x.Qualifications).WithOne()
              .HasForeignKey(q => q.EmployeeId).IsRequired();
+
+            // Derived members, computed from DateOfJoining / ConfirmationDate; never persisted.
+            b.Ignore(x => x.ProbationEndDate);
+            b.Ignore(x => x.IsConfirmed);
 
             b.HasIndex(x => new { x.TenantId, x.EmployeeCode });
         });

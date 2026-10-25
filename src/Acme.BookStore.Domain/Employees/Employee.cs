@@ -5,12 +5,15 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using Volo.Abp;
+using Volo.Abp.Auditing;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 
 namespace Acme.BookStore.Employees
 {
-    public class Employee : AggregateRoot<Guid>, ISoftDelete, IMultiTenant
+    [Audited]
+    public class Employee : FullAuditedAggregateRoot<Guid>, ISoftDelete, IMultiTenant
     {
         private readonly List<EmployeeQualification> _qualifications = new();
         public IReadOnlyList<EmployeeQualification> Qualifications => _qualifications.AsReadOnly();
@@ -34,8 +37,22 @@ namespace Acme.BookStore.Employees
         public Money Salary { get; private set; }
         public Guid DepartmentId { get; private set; }
         public DateTime DateOfJoining { get; private set; }
-        public bool IsDeleted { get; set; } // ISoftDelete
-                                            // Required by the ORM — never call directly.
+
+        /// <summary>
+        /// Set once by <see cref="Confirm"/> when probation is completed. Null while on probation.
+        /// </summary>
+        public DateTime? ConfirmationDate { get; private set; }
+
+        /// <summary>
+        /// Derived, not persisted: the date on which probation ends.
+        /// </summary>
+        public DateTime ProbationEndDate => DateOfJoining.Date.AddMonths(EmployeeConsts.ProbationMonths);
+
+        /// <summary>
+        /// Derived, not persisted.
+        /// </summary>
+        public bool IsConfirmed => ConfirmationDate.HasValue;
+
         protected Employee() { }
         // Primary constructor — guarantees a valid Employee is always born.
         public Employee(
@@ -54,8 +71,40 @@ namespace Acme.BookStore.Employees
             FullName = Check.NotNullOrWhiteSpace(fullName, nameof(fullName));
             Email = Check.NotNull(email, nameof(email));
             DepartmentId = departmentId;
-            DateOfJoining = dateOfJoining;
+            DateOfJoining = CheckDateOfJoining(dateOfJoining);
             SetSalary(startingSalary);
+        }
+
+        /// <summary>
+        /// Confirms the employee at the end of probation.
+        /// Throws if already confirmed or if <paramref name="confirmationDate"/> falls before
+        /// <see cref="ProbationEndDate"/>. Only the date parts are compared.
+        /// </summary>
+        public void Confirm(DateTime confirmationDate)
+        {
+            if (IsConfirmed)
+            {
+                throw new BusinessException(EmployeeManagementSystemDomainErrorCodes.EmployeeAlreadyConfirmed)
+                    .WithData("ConfirmationDate", ConfirmationDate.Value);
+            }
+
+            if (confirmationDate.Date < ProbationEndDate)
+            {
+                throw new BusinessException(EmployeeManagementSystemDomainErrorCodes.ProbationNotCompleted)
+                    .WithData("ProbationEndDate", ProbationEndDate);
+            }
+
+            ConfirmationDate = confirmationDate;
+        }
+
+        private static DateTime CheckDateOfJoining(DateTime dateOfJoining)
+        {
+            if (dateOfJoining == default)
+            {
+                throw new BusinessException(EmployeeManagementSystemDomainErrorCodes.InvalidDateOfJoining);
+            }
+
+            return dateOfJoining;
         }
         public void SetSalary(Money salary)
         {

@@ -1,3 +1,4 @@
+using Acme.BookStore.Employees;
 using Acme.BookStore.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using System;
@@ -16,8 +17,11 @@ public class DepartmentAppService : BookStoreAppService, IDepartmentAppService
     private readonly DepartmentManager _departmentManager;
 
     public DepartmentAppService(
+        IEmployeeRepository employeeRepository,
+        EmployeeManager employeeManager,
         IDepartmentRepository departmentRepository,
         DepartmentManager departmentManager)
+        : base(employeeRepository, employeeManager)
     {
         _departmentRepository = departmentRepository;
         _departmentManager = departmentManager;
@@ -59,6 +63,34 @@ public class DepartmentAppService : BookStoreAppService, IDepartmentAppService
         var department = await _departmentManager.CreateAsync(input.Name, input.Description);
         SetContactInfo(department, input.ContactEmail, input.ContactPhone);
         await _departmentRepository.InsertAsync(department);
+        return ObjectMapper.Map<Department, DepartmentDto>(department);
+    }
+
+    [Authorize(BookStorePermissions.Departments.Create)]
+    public async Task<DepartmentDto> CreateWithTeamsAsync(
+    CreateDepartmentWithTeamsDto input)
+    {
+        var department = await _departmentManager.CreateAsync(
+            input.Name,
+            input.Description);
+
+        // Set the optional contact information if your DTO includes it.
+        SetContactInfo(
+            department,
+            input.ContactEmail,
+            input.ContactPhone);
+
+        foreach (var teamName in input.TeamNames)
+        {
+            department.AddTeam(
+                GuidGenerator.Create(),
+                teamName);
+        }
+
+        await _departmentRepository.InsertAsync(
+            department,
+            autoSave: true);
+
         return ObjectMapper.Map<Department, DepartmentDto>(department);
     }
 

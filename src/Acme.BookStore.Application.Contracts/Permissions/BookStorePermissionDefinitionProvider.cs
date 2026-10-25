@@ -37,6 +37,7 @@ public class BookStorePermissionDefinitionProvider : PermissionDefinitionProvide
         employees.AddChild(BookStorePermissions.Employees.Create, L("Permission:Employees.Create"));
         employees.AddChild(BookStorePermissions.Employees.Edit, L("Permission:Employees.Edit"));
         employees.AddChild(BookStorePermissions.Employees.Transfer, L("Permission:Employees.Transfer"));
+        employees.AddChild(BookStorePermissions.Employees.Confirm, L("Permission:Employees.Confirm"));
         employees.AddChild(BookStorePermissions.Employees.Delete, L("Permission:Employees.Delete"));
 
         var viewSalary = employees.AddChild(

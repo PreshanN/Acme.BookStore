@@ -13,5 +13,7 @@ public interface IEmployeeAppService : IApplicationService
     Task<EmployeeDto> UpdateSalaryAsync(Guid id, UpdateEmployeeSalaryDto input);
     Task<EmployeeDto> ChangeAddressAsync(Guid id, ChangeEmployeeAddressDto input);
     Task<EmployeeDto> TransferAsync(Guid id, TransferEmployeeDto input);
+    Task<EmployeeDto> PromoteAsync(Guid id, PromoteEmployeeDto input);
+    Task<EmployeeDto> ConfirmAsync(Guid id);
     Task DeleteAsync(Guid id);
 }

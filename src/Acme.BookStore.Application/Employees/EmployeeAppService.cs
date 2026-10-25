@@ -13,17 +13,13 @@ namespace Acme.BookStore.Employees;
 [Authorize(BookStorePermissions.Employees.Default)]
 public class EmployeeAppService : BookStoreAppService, IEmployeeAppService
 {
-    private readonly IEmployeeRepository _employeeRepository;
-    private readonly EmployeeManager _employeeManager;
-
     public EmployeeAppService(
-        IEmployeeRepository employeeRepository,
-        EmployeeManager employeeManager)
+      IEmployeeRepository employeeRepository,
+      EmployeeManager employeeManager)
+      : base(employeeRepository, employeeManager)
     {
-        _employeeRepository = employeeRepository;
-        _employeeManager = employeeManager;
     }
-
+ 
     public async Task<EmployeeDto> GetAsync(Guid id)
     {
         var employee = await _employeeRepository.GetAsync(id); // not found -> 404
@@ -50,7 +46,7 @@ public class EmployeeAppService : BookStoreAppService, IEmployeeAppService
         await HideSalaryIfNotAllowedAsync(dtos);
         return new PagedResultDto<EmployeeDto>(totalCount, dtos);
     }
-
+     
     [Authorize(BookStorePermissions.Employees.Create)]
     public async Task<EmployeeDto> CreateAsync(CreateEmployeeDto input)
     {
@@ -93,20 +89,39 @@ public class EmployeeAppService : BookStoreAppService, IEmployeeAppService
         return await MapToDtoAsync(employee);
     }
 
+    [Authorize(BookStorePermissions.Employees.ManageSalary)]
+    public async Task<EmployeeDto> PromoteAsync(Guid id, PromoteEmployeeDto input)
+    {
+        var employee = await _employeeRepository.GetAsync(id);
+        await _employeeManager.TransferAsync(employee, input.NewDepartmentId); // department must exist
+        employee.SetSalary(new Money(input.NewSalaryAmount, input.Currency));  // domain rule: > 0
+        await _employeeRepository.UpdateAsync(employee);
+        return await MapToDtoAsync(employee);
+    }
+
+    [Authorize(BookStorePermissions.Employees.Confirm)]
+    public async Task<EmployeeDto> ConfirmAsync(Guid id)
+    {
+        var employee = await _employeeRepository.GetAsync(id);
+        employee.Confirm(Clock.Now); // domain rules: probation ended, not already confirmed
+        await _employeeRepository.UpdateAsync(employee);
+        return await MapToDtoAsync(employee);
+    }
+
     [Authorize(BookStorePermissions.Employees.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         await _employeeRepository.DeleteAsync(id); // ISoftDelete -> IsDeleted = true
     }
 
-    private async Task<EmployeeDto> MapToDtoAsync(Employee employee)
+    protected override async Task<EmployeeDto> MapToDtoAsync(Employee employee)
     {
         var dto = ObjectMapper.Map<Employee, EmployeeDto>(employee);
-        await HideSalaryIfNotAllowedAsync(new[] { dto });
+        await HideSalaryIfNotAllowedAsync(new List<EmployeeDto> { dto });
         return dto;
     }
 
-    private async Task HideSalaryIfNotAllowedAsync(IEnumerable<EmployeeDto> dtos)
+    protected override async Task HideSalaryIfNotAllowedAsync(List<EmployeeDto> dtos)
     {
         if (await AuthorizationService.IsGrantedAsync(BookStorePermissions.Employees.ViewSalary))
         {

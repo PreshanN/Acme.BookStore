@@ -12,5 +12,8 @@ public class EmployeeDto : EntityDto<Guid>
     public string? SalaryCurrency { get; set; }                 // from Salary.Currency
     public Guid DepartmentId { get; set; }
     public DateTime DateOfJoining { get; set; }
+    public DateTime ProbationEndDate { get; set; }              // computed: DateOfJoining + probation months
+    public DateTime? ConfirmationDate { get; set; }             // null while still on probation
+    public bool IsConfirmed { get; set; }
     public AddressDto? CurrentAddress { get; set; }
 }

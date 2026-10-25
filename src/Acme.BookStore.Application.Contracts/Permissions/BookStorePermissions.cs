@@ -30,6 +30,7 @@ public static class BookStorePermissions
         public const string Create = Default + ".Create";
         public const string Edit = Default + ".Edit";
         public const string Transfer = Default + ".Transfer";
+        public const string Confirm = Default + ".Confirm";
         public const string Delete = Default + ".Delete";
         public const string ViewSalary = Default + ".ViewSalary";
         public const string ManageSalary = ViewSalary + ".Manage";
