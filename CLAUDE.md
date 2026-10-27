@@ -88,3 +88,4 @@ Things a new session should know before trusting the tree:
 - `EntityFrameworkCore/EntityTypeConfigurations/*Configuration.cs` (untracked) duplicate the inline `builder.Entity<...>` blocks in `BookStoreDbContext.OnModelCreating` and are **not applied** (no `ApplyConfiguration` / `ApplyConfigurationsFromAssembly` call). The inline blocks are what the model and migrations currently reflect. Also note `builder.Entity<DepartmentTeamConfiguration>(...)` in the DbContext registers the configuration class itself as an entity; it should be `DepartmentTeam`.
 - `BookStoreAppService` (the shared base class) currently takes `IEmployeeRepository`/`EmployeeManager` in its constructor and carries Employee-specific methods, so every app service (including `DepartmentAppService`) must pass those in. Expect this to be refactored.
 - The `Department_DataAccess` migration and the `DepartmentDataSeedContributor` are untracked; run DbMigrator after pulling.
+ac

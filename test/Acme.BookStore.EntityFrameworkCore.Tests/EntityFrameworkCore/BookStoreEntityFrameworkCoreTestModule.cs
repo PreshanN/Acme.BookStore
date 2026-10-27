@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Acme.BookStore.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Data;
@@ -41,6 +42,10 @@ public class BookStoreEntityFrameworkCoreTestModule : AbpModule
 
         ConfigureInMemorySqlite(context.Services);
 
+        // ─── ADD THIS REGISTERED MOCK REPLACEMENT LINE RIGHT HERE ───
+        // It tells the test application layer container to resolve our safe, 
+        // empty implementation instead of executing the production migration files.
+        context.Services.AddTransient<IBookStoreDbSchemaMigrator, NullBookStoreDbSchemaMigrator>();
     }
 
     private void ConfigureInMemorySqlite(IServiceCollection services)
@@ -66,5 +71,15 @@ public class BookStoreEntityFrameworkCoreTestModule : AbpModule
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
         _database?.Dispose();
+    }
+}
+
+// ─── SAFE HOVER CONTAINER STUB IMPLEMENTATION AT THE VERY BOTTOM ───
+public class NullBookStoreDbSchemaMigrator : IBookStoreDbSchemaMigrator, Volo.Abp.DependencyInjection.ITransientDependency
+{
+    public System.Threading.Tasks.Task MigrateAsync()
+    {
+        // No-op: Neutrals migration executions within integration test projects safely.
+        return System.Threading.Tasks.Task.CompletedTask;
     }
 }

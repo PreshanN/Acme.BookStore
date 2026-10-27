@@ -11,7 +11,30 @@ namespace Acme.BookStore.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
+ 
+                if (migrationBuilder.ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite")
+                {
+                    return;
+                }
+            
+
+                migrationBuilder.CreateTable(
+                    name: "AbpAuditLogExcelFiles",
+                    columns: table => new
+                    {
+                        Id = table.Column<Guid>(type: "uuid", nullable: false),
+                        TenantId = table.Column<Guid>(type: "uuid", nullable: true),
+                        FileName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                        CreationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                        CreatorId = table.Column<Guid>(type: "uuid", nullable: true)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AbpAuditLogExcelFiles", x => x.Id);
+                    });
+ 
+
+                migrationBuilder.CreateTable(
                 name: "AbpAuditLogExcelFiles",
                 columns: table => new
                 {

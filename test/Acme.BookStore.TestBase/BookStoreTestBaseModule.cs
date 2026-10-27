@@ -6,6 +6,7 @@ using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Data;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
+using System.Threading.Tasks;
 
 namespace Acme.BookStore;
 
@@ -25,6 +26,11 @@ public class BookStoreTestBaseModule : AbpModule
         });
 
         context.Services.AddAlwaysAllowAuthorization();
+
+        // ─── THE GLOBAL OVERRIDE SWITCH ───
+        // We inject our empty placeholder class to override the IBookStoreDbSchemaMigrator interface registry.
+        // This stops all Application and Domain test projects from running real migrations.
+        context.Services.AddTransient<Data.IBookStoreDbSchemaMigrator, NullBookStoreDbSchemaMigrator>();
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -43,5 +49,15 @@ public class BookStoreTestBaseModule : AbpModule
                     .SeedAsync();
             }
         });
+    }
+}
+
+// ─── STUB IMPLEMENTATION ───
+// This neutralizes migration executions inside all integration test projects safely.
+public class NullBookStoreDbSchemaMigrator : Data.IBookStoreDbSchemaMigrator
+{
+    public Task MigrateAsync()
+    {
+        return Task.CompletedTask;
     }
 }
