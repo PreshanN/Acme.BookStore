@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
@@ -6,7 +8,7 @@ using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Data;
 using Volo.Abp.Modularity;
 using Volo.Abp.Threading;
-using System.Threading.Tasks;
+using NSubstitute;
 
 namespace Acme.BookStore;
 
@@ -27,10 +29,12 @@ public class BookStoreTestBaseModule : AbpModule
 
         context.Services.AddAlwaysAllowAuthorization();
 
-        // ─── THE GLOBAL OVERRIDE SWITCH ───
-        // We inject our empty placeholder class to override the IBookStoreDbSchemaMigrator interface registry.
-        // This stops all Application and Domain test projects from running real migrations.
+        // 1. Global Override Switch: Stops Application and Domain test projects from running real migrations
         context.Services.AddTransient<Data.IBookStoreDbSchemaMigrator, NullBookStoreDbSchemaMigrator>();
+
+        // 2. OpenIddict Dynamic Fake: Explicit registration prevents interface compilation errors
+        var mockOpenIddictRepo = Substitute.For<Volo.Abp.OpenIddict.Applications.IOpenIddictApplicationRepository>();
+        context.Services.AddSingleton<Volo.Abp.OpenIddict.Applications.IOpenIddictApplicationRepository>(mockOpenIddictRepo);
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
@@ -52,8 +56,7 @@ public class BookStoreTestBaseModule : AbpModule
     }
 }
 
-// ─── STUB IMPLEMENTATION ───
-// This neutralizes migration executions inside all integration test projects safely.
+// ─── MIGRATOR STUB IMPLEMENTATION ───
 public class NullBookStoreDbSchemaMigrator : Data.IBookStoreDbSchemaMigrator
 {
     public Task MigrateAsync()

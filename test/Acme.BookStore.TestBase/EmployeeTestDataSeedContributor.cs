@@ -24,18 +24,66 @@ namespace Acme.BookStore
             _departmentRepository = departmentRepository;
             _employeeRepository = employeeRepository;
         }
-
         public async Task SeedAsync(DataSeedContext context)
         {
-            await _departmentRepository.InsertAsync(new Department(TestData.EngineeringId, "Engineering"));
-            await _departmentRepository.InsertAsync(new Department(TestData.FinanceId, "Finance"));
+            // Engineering department with code and teams
+            var engineering = new Department(
+                TestData.EngineeringId,
+                "Engineering",
+                "Builds the products"
+            );
 
-            await _employeeRepository.InsertAsync(NewEmployee(TestData.PriyaId, "EMP-0001", "Priya Sharma"));
-            await _employeeRepository.InsertAsync(NewEmployee(TestData.ArjunId, "EMP-0002", "Arjun Mehta"));
-            await _employeeRepository.InsertAsync(NewEmployee(TestData.MeeraId, "EMP-0003", "Meera Iyer"));
+            engineering.SetCode("ENG");
+            engineering.AddTeam(TestData.BackendTeamId, "Backend");
+            engineering.AddTeam(TestData.FrontendTeamId, "Frontend");
 
-            // one employee owned by a tenant - for the isolation test 
-            await _employeeRepository.InsertAsync(NewEmployee(TestData.TechCorpEmployeeId, "EMP-0001", "Kavya Rao", TestData.TechCorpTenantId));
+            await _departmentRepository.InsertAsync(engineering);
+
+            // Finance department
+            var finance = new Department(TestData.FinanceId, "Finance");
+            finance.SetCode("FIN");
+
+            await _departmentRepository.InsertAsync(finance);
+
+            // Legal department - no employees, so it can be deleted in tests
+            var legal = new Department(TestData.LegalId, "Legal");
+            legal.SetCode("LEG");
+
+            await _departmentRepository.InsertAsync(legal);
+
+            // Engineering department belonging to another tenant
+            var techCorpEngineering = new Department(
+                TestData.TechCorpDepartmentId,
+                "Engineering",
+                tenantId: TestData.TechCorpTenantId
+            );
+
+            techCorpEngineering.SetCode("ENG");
+
+            await _departmentRepository.InsertAsync(techCorpEngineering);
+
+            // Seed employees - keep the existing code
+            await _employeeRepository.InsertAsync(
+                NewEmployee(TestData.PriyaId, "EMP-0001", "Priya Sharma")
+            );
+
+            await _employeeRepository.InsertAsync(
+                NewEmployee(TestData.ArjunId, "EMP-0002", "Arjun Mehta")
+            );
+
+            await _employeeRepository.InsertAsync(
+                NewEmployee(TestData.MeeraId, "EMP-0003", "Meera Iyer")
+            );
+
+            // Employee owned by another tenant for the isolation test
+            await _employeeRepository.InsertAsync(
+                NewEmployee(
+                    TestData.TechCorpEmployeeId,
+                    "EMP-0001",
+                    "Kavya Rao",
+                    TestData.TechCorpTenantId
+                )
+            );
         }
 
         private static Employee NewEmployee(Guid id, string code, string name, Guid? tenantId = null) =>
@@ -49,5 +97,8 @@ namespace Acme.BookStore
                 new DateTime(2026, 1, 5),
                 tenantId
             );
+
+
+
     }
 }

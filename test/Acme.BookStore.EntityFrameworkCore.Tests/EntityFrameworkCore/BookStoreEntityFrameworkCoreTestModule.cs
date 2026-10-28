@@ -7,15 +7,18 @@ using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Sqlite;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Modularity;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.Uow;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 
 namespace Acme.BookStore.EntityFrameworkCore;
 
 [DependsOn(
     typeof(BookStoreApplicationTestModule),
     typeof(BookStoreEntityFrameworkCoreModule),
-    typeof(AbpEntityFrameworkCoreSqliteModule)
+    typeof(AbpEntityFrameworkCoreSqliteModule),
+    typeof(AbpOpenIddictEntityFrameworkCoreModule)
 )]
 public class BookStoreEntityFrameworkCoreTestModule : AbpModule
 {

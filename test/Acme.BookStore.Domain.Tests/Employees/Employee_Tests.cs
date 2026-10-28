@@ -4,15 +4,15 @@ using Volo.Abp;
 using Xunit;
 using Acme.BookStore.Employees;
 using Acme.BookStore.Shared.ValueObjects;
-
+ 
 namespace Acme.BookStore.Employees;
 
 public class Employee_Tests // Plain class - no ABP base runner, no DI, no DB
 {
     [Theory]
-    [InlineData(0)]
-    [InlineData(-100)]
-    public void SetSalary_Should_Throw_When_Amount_Is_Not_Positive(decimal amount)
+    [InlineData(0, "Employee:InvalidSalary")]  // 0 triggers Employee validation
+    [InlineData(-100, "Money:Negative")]       // Negative values are intercepted by Money first
+    public void SetSalary_Should_Throw_When_Amount_Is_Not_Positive(decimal amount, string expectedErrorCode)
     {
         // Arrange
         var employee = CreateEmployee();
@@ -21,8 +21,9 @@ public class Employee_Tests // Plain class - no ABP base runner, no DI, no DB
         var ex = Should.Throw<BusinessException>(() => employee.SetSalary(new Money(amount, "INR")));
 
         // Assert
-        ex.Message.ShouldBe("Employee:InvalidSalary");
-        employee.Salary.Amount.ShouldBe(850000m); // State remains unchanged
+        ex.ShouldNotBeNull();
+        ex.Code.ShouldBe(expectedErrorCode); // Updated dynamically based on inputs
+        employee.Salary.Amount.ShouldBe(850000m); // Unchanged
     }
 
     [Fact]

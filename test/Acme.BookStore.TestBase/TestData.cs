@@ -18,6 +18,12 @@ namespace Acme.BookStore
 
         public static readonly Guid TechCorpEmployeeId = Guid.Parse("7b21c9d4-6e5f-4a3b-8c2d-0e1f2a3b4c10");
 
+        public static readonly Guid LegalId = Guid.Parse("5f8a1c2e-0d3b-4c9a-9e61-1a2b3c4d5e03");
+
+        public static readonly Guid BackendTeamId = Guid.Parse("6c4d2e1f-1a2b-4c3d-8e9f-0a1b2c3d4e01"); 
+        public static readonly Guid FrontendTeamId = Guid.Parse("6c4d2e1f-1a2b-4c3d-8e9f-0a1b2c3d4e02");
+        public static readonly Guid TechCorpDepartmentId = Guid.Parse("5f8a1c2e-0d3b-4c9a-9e61-1a2b3c4d5e10");
+
     }
 }
 
